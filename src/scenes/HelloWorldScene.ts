@@ -1,12 +1,20 @@
 import Phaser from 'phaser'
+import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+import StaticGroup = Phaser.Physics.Arcade.StaticGroup;
+import Group = Phaser.Physics.Arcade.Group;
+import Text = Phaser.GameObjects.Text;
+import GameObjectWithDynamicBody = Phaser.Types.Physics.Arcade.GameObjectWithDynamicBody;
 
 export default class HelloWorldScene extends Phaser.Scene
 {
-  player = null;
-  platforms = null;
-  scale = null;
-  score = 0;
-  scoreText = '';
+  private player: SpriteWithDynamicBody = null;
+  private platforms: StaticGroup;
+  private currentScale: number = null;
+  private score: number = 0;
+  private scoreText: Text;
+  private bombs: Group = null;
+  private stars: Group = null;
+  private gameOver: boolean;
   
   constructor()
   {
@@ -31,8 +39,8 @@ export default class HelloWorldScene extends Phaser.Scene
     const image = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'sky')
     const scaleX = this.cameras.main.width / image.width;
     const scaleY = this.cameras.main.height / image.height;
-    this.scale = Math.max(scaleX, scaleY);
-    image.setScale(this.scale).setScrollFactor(0);
+    this.currentScale = Math.max(scaleX, scaleY);
+    image.setScale(this.currentScale).setScrollFactor(0);
 
     this.initPlatforms();
     this.initPlayer();
@@ -48,13 +56,13 @@ export default class HelloWorldScene extends Phaser.Scene
 
     if (cursors.left.isDown)
     {
-      this.player.setVelocityX(-160 * this.scale);
+      this.player.setVelocityX(-160 * this.currentScale);
 
       this.player.anims.play('left', true);
     }
     else if (cursors.right.isDown)
     {
-      this.player.setVelocityX(160 * this.scale);
+      this.player.setVelocityX(160 * this.currentScale);
 
       this.player.anims.play('right', true);
     }
@@ -67,17 +75,17 @@ export default class HelloWorldScene extends Phaser.Scene
 
     if (cursors.up.isDown && this.player.body.touching.down)
     {
-      this.player.setVelocityY(-360 * this.scale);
+      this.player.setVelocityY(-360 * this.currentScale);
     }
 
     if (cursors.down.isDown && !this.player.body.touching.down)
     {
-      this.player.setVelocityY(160 * this.scale);
+      this.player.setVelocityY(160 * this.currentScale);
     }
   }
   
   initPlayer() {
-    this.player = this.physics.add.sprite(this.cameras.main.width * 0.05, this.cameras.main.height * 0.90, 'dude').setScale(this.scale);
+    this.player = this.physics.add.sprite(this.cameras.main.width * 0.05, this.cameras.main.height * 0.90, 'dude').setScale(this.currentScale);
 
     this.player.setBounce(0);
     this.player.setCollideWorldBounds(true);
@@ -107,7 +115,7 @@ export default class HelloWorldScene extends Phaser.Scene
   
   initPlatforms() {
     this.platforms = this.physics.add.staticGroup();
-    const platformScale = this.scale;
+    const platformScale = this.currentScale;
 
     // bottom platform
     this.platforms.create( this.cameras.main.width * 0.1,  this.cameras.main.height, 'ground');
@@ -123,17 +131,20 @@ export default class HelloWorldScene extends Phaser.Scene
     // right-up platform
     this.platforms.create(this.cameras.main.width * 0.75,  this.cameras.main.height * 0.25, 'ground');
 
-    this.platforms.getChildren().forEach((platform) => platform.setScale(platformScale).refreshBody());
+    
+    //(platform: Phaser.Physics.Arcade.Body) =>
+    this.platforms.getChildren().forEach((platform: any) => platform.setScale(platformScale).refreshBody());
   }
   
   initStars() {
     this.stars = this.physics.add.group({
       key: 'star',
       repeat: 11,
-      setXY: { x: 12 * this.scale, y: 0, stepX: 70 * this.scale }
+      setXY: { x: 12 * this.currentScale, y: 0, stepX: 70 * this.currentScale }
     });
 
-    this.stars.children.iterate(function (child) {
+    // GameObjectWithBody
+    this.stars.children.iterate((child: any) => {
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
     
@@ -161,7 +172,8 @@ export default class HelloWorldScene extends Phaser.Scene
 
     if (this.stars.countActive(true) === 0)
     {
-      this.stars.children.iterate((child) => {
+      // GameObjectWithBody
+      this.stars.children.iterate((child: any) => {
 
         child.enableBody(true, child.x, 0, true, true);
 
@@ -169,8 +181,8 @@ export default class HelloWorldScene extends Phaser.Scene
 
       const x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
 
-      const bomb = this.bombs.create(x, 16, 'bomb');
-      bomb.setBounce(1);
+      const bomb: Phaser.Physics.Arcade.Body = this.bombs.create(x, 16, 'bomb');
+      bomb.setBounce(1, 0.7);
       bomb.setCollideWorldBounds(true);
       bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
 

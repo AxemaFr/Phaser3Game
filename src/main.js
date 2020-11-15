@@ -4,12 +4,12 @@ import HelloWorldScene from './scenes/HelloWorldScene'
 
 const config = {
 	type: Phaser.AUTO,
-	width: 800,
-	height: 600,
+	width: '100%',
+	height: '100%',
 	physics: {
 		default: 'arcade',
 		arcade: {
-			gravity: { y: 200 }
+			gravity: { y: 600 }
 		}
 	},
 	scene: [HelloWorldScene]
